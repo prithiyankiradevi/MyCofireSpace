@@ -9,6 +9,7 @@ const registerSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    role:String,
     location:String
 })
 
