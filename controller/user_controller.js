@@ -32,7 +32,7 @@ const login=async(req,res)=>{
             const password=await bcrypt.compare(req.body.password,data[0].password)
             if(password==true){
                 const token=jwt.sign({name:data[0].username._id},'who are you')
-                res.status(200).send({success:'true',message:'successfully login',data:data,token})
+                res.status(200).send({success:'true',message:'successfully login',data:data,role:data[0].role,token})
             }else{
             res.status(200).send({success:'false',message:'invalid password',data:[]})
             }
