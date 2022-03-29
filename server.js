@@ -4,6 +4,7 @@ const dotenv=require('dotenv').config()
 require('./config/db_config')
 const superAdmin=require('./route/super_admin')
 const user=require('./route/user_route')
+const space=require('./route/space_route')
 
 const app=express();
 
@@ -18,6 +19,7 @@ app.get('',(req,res)=>{
 
 app.use('/admin',superAdmin)
 app.use('/user',user)
+app.use('/space',space)
 
 
 app.listen(process.env.PORT,()=>{
