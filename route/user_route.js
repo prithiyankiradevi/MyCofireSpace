@@ -6,6 +6,8 @@ router.post('/login',userController.login)
 router.get('/getAll',userController.getAllUser)
 router.get('/getById/:userId',userController.getPerUser)
 
+router.post('/space/create',userController.createSpace)
+
 
 
 
