@@ -129,15 +129,15 @@ const createSpace=async(req,res)=>{
 }
 
 const spaceImage=async(req,res)=>{
-  console.log(req.body)
-  console.log(req.file)
-  req.body.spaceImage=`http://localhost:7777/uploads/${req.file.originalname}`
-  console.log(req.body.spaceImage)
-  spaceModel.spaceImage.create(req.body,(err,data)=>{
+  req.body.spaceImage=`https://mycofirespace.herokuapp.com/uploads/${req.file.originalname}`
+  spaceModel.spaceImage.create(req.body,async(err,data)=>{
     if(err){
-throw err
+      res.status(400).send({success:'false',message:'failed'})
     }else{
-res.send (data)
+      const z=await spaceModel.space.findById(req.params.id)
+     z.spaceImageArray.push(data.spaceImage)
+     const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
+      res.status(200).send({success:'true',message:'space image created successfully',data})
     }
   })
 }

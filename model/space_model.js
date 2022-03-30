@@ -24,7 +24,7 @@ const spaceSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    spaceImage:[String],
+    spaceImageArray:[String],
     deleteFlag:{
         type:Boolean,
         default:false
