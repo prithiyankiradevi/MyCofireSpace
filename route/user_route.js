@@ -11,7 +11,7 @@ router.put('/update/:userId',userController.updateUser)
 
 router.post('/space/create',userController.createSpace)
 
-router.post('/space/image/create/:id',multer.upload.single('spaceImage'),userController.spaceImage)
+router.post('/space/image/create',multer.upload.single('spaceImage'),userController.spaceImage)
 
 
 
