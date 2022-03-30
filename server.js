@@ -21,6 +21,7 @@ app.use('/admin',superAdmin)
 app.use('/user',user)
 app.use('/space',space)
 
+app.use('/uploads',express.static('uploads'))
 
 app.listen(process.env.PORT,()=>{
     console.log(`server is listening on the port:${process.env.PORT}`)

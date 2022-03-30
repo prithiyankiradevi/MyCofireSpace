@@ -30,8 +30,8 @@ const login=async(req,res)=>{
         if(data){
             const password=await bcrypt.compare(req.body.password,data[0].password)
             if(password==true){
-                const token=jwt.sign({name:data[0].username,id:data[0]._id},'who are you')
-                res.status(200).send({success:'true',message:'successfully login',data:data,role:data[0].role,token})
+                const token=jwt.sign({id:data[0]._id},'who are you')
+                res.status(200).send({success:'true',message:'successfully login',data:data,token})
             }else{
             res.status(200).send({success:'false',message:'invalid password',data:[]})
             }
@@ -75,30 +75,71 @@ const getPerUser=async(req,res)=>{
       }
 }
 
-const createSpace=async(req,res)=>{
-  const errors=validationResult(req)
-  if(!errors.isEmpty()){
-      res.json({message:errors.array()})
-  }else{
-      if(req.headers.authorization){
-          const token=await jwt.decode(req.headers.authorization)
-          req.body.spaceOwnerName=token.name
-          req.body.spaceOwnerId=token.id
-          spaceModel.space.create(req.body,(err,data)=>{
-              if(err){
-                  res.status(400).send({success:'false',message:'failed'})
-              }else{
-                  if(data!=null){
-                      res.status(200).send({success:'true',message:'create successfully',data})
-                  }else{
-                      res.status(200).send({success:'false',message:'failed',data:[]})
-                  }
-              }
-          })
-      }else{
-          res.status(200).send({success:'false',message:'unauthorized'})
+const updateUser=async(req,res)=>{
+  try{
+    if(req.headers.authorization){
+      if (req.params.userId.length == 24) {
+        let response = await loginModel.findByIdAndUpdate({_id:req.params.userId,deleteFlag:"false"},{$set:req.body},{new:true});
+        // const data = response[0];
+        if (response) {
+          res.status(200).send({ success:'true',message:'fetch data successfully',data: response });
+        } else {
+          res.status(302).send({ success:'false',data: [] });
+        }
+      } else {
+        res.status(200).send({ message: "please provide a valid id" });
       }
+    }else{
+      res.status(400).send({ message: "unauthorized" });
+    }
+  }catch(e){
+    console.log(e.message)
+    res.status(500).send("internal server error")
   }
+}
+
+const createSpace=async(req,res)=>{
+  try{
+    const errors=validationResult(req)
+    if(!errors.isEmpty()){
+        res.json({message:errors.array()})
+    }else{
+        if(req.headers.authorization){
+            const token=await jwt.decode(req.headers.authorization)
+            req.body.spaceOwnerName=token.name
+            req.body.spaceOwnerId=token.id
+            spaceModel.space.create(req.body,(err,data)=>{
+                if(err){
+                    res.status(400).send({success:'false',message:'failed'})
+                }else{
+                    if(data!=null){
+                        res.status(200).send({success:'true',message:'create successfully',data})
+                    }else{
+                        res.status(200).send({success:'false',message:'failed',data:[]})
+                    }
+                }
+            })
+        }else{
+            res.status(200).send({success:'false',message:'unauthorized'})
+        }
+    }
+  }catch(e){
+    res.status(500).send('internal server error')
+  }
+}
+
+const spaceImage=async(req,res)=>{
+  console.log(req.body)
+  console.log(req.file)
+  req.body.spaceImage=`http://localhost:7777/uploads/${req.file.originalname}`
+  console.log(req.body.spaceImage)
+  spaceModel.spaceImage.create(req.body,(err,data)=>{
+    if(err){
+throw err
+    }else{
+res.send (data)
+    }
+  })
 }
 
 module.exports={
@@ -106,7 +147,9 @@ module.exports={
     login,
     getAllUser,
     getPerUser,
-    createSpace
+    updateUser,
+    createSpace,
+    spaceImage
 }
 
 
