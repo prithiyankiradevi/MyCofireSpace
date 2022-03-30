@@ -8,6 +8,7 @@ const spaceSchema = mongoose.Schema({
     city: String,
     contact: Number,
     day: String,
+    dayPrice:String,
     wifi: {
         type: Boolean,
         default: false
@@ -32,7 +33,6 @@ const spaceSchema = mongoose.Schema({
     createdAt:{
         type:Date,
         default:new Date()},
-    spaceOwnerName:String,
     spaceOwnerId:String
 })
 

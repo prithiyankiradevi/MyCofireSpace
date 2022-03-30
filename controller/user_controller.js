@@ -106,7 +106,6 @@ const createSpace=async(req,res)=>{
     }else{
         if(req.headers.authorization){
             const token=await jwt.decode(req.headers.authorization)
-            req.body.spaceOwnerName=token.name
             req.body.spaceOwnerId=token.id
             spaceModel.space.create(req.body,(err,data)=>{
                 if(err){
