@@ -7,7 +7,7 @@ const spaceSchema = mongoose.Schema({
     address: String,
     city: String,
     contact: Number,
-    day: Number,
+    day: String,
     wifi: {
         type: Boolean,
         default: false

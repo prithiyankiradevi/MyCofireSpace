@@ -134,9 +134,9 @@ const spaceImage=async(req,res)=>{
     if(err){
       res.status(400).send({success:'false',message:'failed'})
     }else{
-      const z=await spaceModel.space.findById(req.params.id)
-     z.spaceImageArray.push(data.spaceImage)
-     const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
+    //   const z=await spaceModel.space.findById(req.params.id)
+    //  z.spaceImageArray.push(data.spaceImage)
+    //  const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
       res.status(200).send({success:'true',message:'space image created successfully',data})
     }
   })
