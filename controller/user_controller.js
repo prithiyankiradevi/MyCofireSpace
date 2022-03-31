@@ -98,6 +98,31 @@ const updateUser=async(req,res)=>{
   }
 }
 
+const deleteUser=async(req,res)=>{
+  try {
+    if (req.params.userId.length == 24) {
+      loginModel.findByIdAndUpdate(req.params.userId,{ deleteFlag: "true" },{ returnOriginal: false },
+        (err, data) => {
+          if (err) {
+            throw err;
+          } else {
+            if (data != null) {
+              res.status(200).send({ message: "data deleted successfully" });
+            } else {
+              res.status(400).send({ data: [] });
+            }
+          }
+        }
+      );
+    } else {
+      res.status(200).send({ message: "please provide a valid id" });
+    }
+  } catch (e) {
+    res.status(500).send("internal server error");
+  }
+}
+
+
 const createSpace=async(req,res)=>{
   try{
     const errors=validationResult(req)
@@ -127,6 +152,82 @@ const createSpace=async(req,res)=>{
   }
 }
 
+const getBySpaceId=async(req,res)=>{
+  try{
+  if (req.params.spaceId.length == 24) {
+    // console.log('hai')
+    // console.log(typeof(req.params.id))
+    // let response=await blogController.blogSchema.aggregate([{$match:{_id:mongoose.Types.ObjectId(req.params.id)}}])
+    // console.log(response)
+    let response = await spaceModel.space.find({_id:req.params.spaceId,deleteFlag:"false"});
+    const data = response[0];
+    if (data != null) {
+      res.status(200).send({success:'true',message:'data fetch successfully' ,data: data });
+    } else {
+      res.status(302).send({success:'false',message:'failed', data: [] });
+    }
+  } else {
+    res.status(200).send({ message: "please provide a valid id" });
+  }
+} catch (e) {
+  console.log(e.message)
+  res.status(500).send("internal server error");
+}
+}
+
+const getAllSpace=async(req,res)=>{
+  try {
+    const token = jwt.decode(req.headers.authorization);
+    if (token != undefined) {
+      const a = await spaceModel.space.aggregate([
+        { $match: {spaceOwnerId: token.id} },
+      ]);
+      const arr=[]
+      if (a.length != 0) {
+        const filterSpace=a.map((result)=>{
+          result.deleteFlag=='false'
+          return arr.push(result)
+        })
+        arr.sort().reverse()
+        res.status(200).send({success:'true',message:'fetch all space',data: arr });
+      } else {
+        res.status(302).send({success:'false',message:'failed',data: [] });
+      }
+    } else {
+      res.status(400).send("UnAuthorized");
+    }
+  } catch (e) {
+    res.status(500).send("internal server error");
+  }
+}
+
+const  updateSpace=async(req,res)=>{
+  try{
+    if(req.headers.authorization){
+      if (req.params.spaceId.length == 24) {
+        let response = await spaceModel.space.findByIdAndUpdate({_id:req.params.spaceId,deleteFlag:"false"},{$set:req.body},{new:true});
+        if (response) {
+          const token=await jwt.decode(req.headers.authorization)
+          if(token){
+              res.status(200).send({ success:'true',message:'upadate successfully',data: response });
+          }else{
+            res.status(200).send({ success:'false',message:'invalid token ',data: [] });
+          }       
+        } else {
+          res.status(302).send({ success:'false',data: [] });
+        }
+      } else {
+        res.status(200).send({ message: "please provide a valid space id" });
+      }
+    }else{
+      res.status(400).send({ message: "unauthorized" });
+    }
+  }catch(e){
+    console.log(e.message)
+    res.status(500).send("internal server error")
+  }
+}
+
 const spaceImage=async(req,res)=>{
   console.log(req.file)
   req.body.spaceImage=`https://mycofirespace.herokuapp.com/uploads/${req.file.originalname}`
@@ -143,13 +244,18 @@ const spaceImage=async(req,res)=>{
   })
 }
 
+
 module.exports={
     register,
     login,
     getAllUser,
     getPerUser,
     updateUser,
+    deleteUser,
     createSpace,
+    getBySpaceId,
+    getAllSpace,
+    updateSpace,
     spaceImage
 }
 
