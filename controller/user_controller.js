@@ -128,11 +128,13 @@ const createSpace=async(req,res)=>{
 }
 
 const spaceImage=async(req,res)=>{
+  console.log(req.file)
   req.body.spaceImage=`https://mycofirespace.herokuapp.com/uploads/${req.file.originalname}`
   spaceModel.spaceImage.create(req.body,async(err,data)=>{
     if(err){
       res.status(400).send({success:'false',message:'failed'})
     }else{
+      console.log(data)
     //   const z=await spaceModel.space.findById(req.params.id)
     //  z.spaceImageArray.push(data.spaceImage)
     //  const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})

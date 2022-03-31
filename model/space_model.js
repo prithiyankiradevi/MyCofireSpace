@@ -9,6 +9,8 @@ const spaceSchema = mongoose.Schema({
     contact: Number,
     day: String,
     dayPrice:String,
+    weekPrice:String,
+    monthPrice:String,
     wifi: {
         type: Boolean,
         default: false
