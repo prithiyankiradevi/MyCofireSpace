@@ -26,11 +26,13 @@ const register=async(req,res)=>{
 
 const login=async(req,res)=>{
     try{
-        const data=await loginModel.aggregate([{$match:{$and:[{phoneNumber:req.body.phoneNumber},{deleteFlag:false}]}}])
+        const data=await loginModel.findOne({phoneNumber:req.body.phoneNumber,deleteFlag:'false'})
+        // .aggregate([{$match:{$and:[{phoneNumber:req.body.phoneNumber},{deleteFlag:'false'}]}}])
         if(data){
-            const password=await bcrypt.compare(req.body.password,data[0].password)
+            const password=await bcrypt.compare(req.body.password,data.password)
             if(password==true){
-                const token=jwt.sign({id:data[0]._id},'who are you')
+                const token=JSON.stringify(jwt.sign({id:data._id},'who are you'))
+
                 res.status(200).send({success:'true',message:'successfully login',data:data,token})
             }else{
             res.status(200).send({success:'false',message:'invalid password',data:[]})
@@ -39,6 +41,7 @@ const login=async(req,res)=>{
             res.status(400).send({success:'false',message:'data not exists',data:[]})
         }
     }catch(e){
+      console.log(e.message)
         res.status(500).send({success:'false',message:'internal server error'})
     }
 }
@@ -79,7 +82,7 @@ const updateUser=async(req,res)=>{
   try{
     if(req.headers.authorization){
       if (req.params.userId.length == 24) {
-        let response = await loginModel.findByIdAndUpdate({_id:req.params.userId,deleteFlag:"false"},{$set:req.body},{new:true});
+        let response = await loginModel.findByIdAndUpdate({_id:req.params.userId},{$set:req.body},{new:true});
         // const data = response[0];
         if (response) {
           res.status(200).send({ success:'true',message:'fetch data successfully',data: response });
@@ -130,16 +133,19 @@ const createSpace=async(req,res)=>{
         res.json({message:errors.array()})
     }else{
         if(req.headers.authorization){
-            const token=await jwt.decode(req.headers.authorization)
+            const token=await jwt.decode(JSON.parse(req.headers.authorization))
+            console.log(token)
             req.body.spaceOwnerId=token.id
+            console.log(req.body)
             spaceModel.space.create(req.body,(err,data)=>{
+              console.log(data)
                 if(err){
                     res.status(400).send({success:'false',message:'failed'})
                 }else{
                     if(data!=null){
                         res.status(200).send({success:'true',message:'create successfully',data})
                     }else{
-                        res.status(200).send({success:'false',message:'failed',data:[]})
+                      res.status(200).send({success:'false',message:'failed',data:[]})
                     }
                 }
             })
@@ -148,6 +154,7 @@ const createSpace=async(req,res)=>{
         }
     }
   }catch(e){
+    console.log(e)
     res.status(500).send('internal server error')
   }
 }
@@ -155,11 +162,7 @@ const createSpace=async(req,res)=>{
 const getBySpaceId=async(req,res)=>{
   try{
   if (req.params.spaceId.length == 24) {
-    // console.log('hai')
-    // console.log(typeof(req.params.id))
-    // let response=await blogController.blogSchema.aggregate([{$match:{_id:mongoose.Types.ObjectId(req.params.id)}}])
-    // console.log(response)
-    let response = await spaceModel.space.find({_id:req.params.spaceId,deleteFlag:"false"});
+    let response = await spaceModel.space.find({_id:req.params.spaceId,deleteFlag:false});
     const data = response[0];
     if (data != null) {
       res.status(200).send({success:'true',message:'data fetch successfully' ,data: data });
@@ -175,7 +178,7 @@ const getBySpaceId=async(req,res)=>{
 }
 }
 
-const getAllSpace=async(req,res)=>{
+const getAllSpaceCreatedByOwner=async(req,res)=>{
   try {
     const token = jwt.decode(req.headers.authorization);
     if (token != undefined) {
@@ -200,6 +203,31 @@ const getAllSpace=async(req,res)=>{
     res.status(500).send("internal server error");
   }
 }
+
+const getAllSpace=async(req,res)=>{
+  try {
+    const token = jwt.decode(req.headers.authorization);
+    if (token != undefined) {
+      const a = await spaceModel.space.find({})
+      const arr=[]
+      if (a.length != 0) {
+        const filterSpace=a.map((result)=>{
+          result.deleteFlag=='false'
+          return arr.push(result)
+        })
+        arr.sort().reverse()
+        res.status(200).send({success:'true',message:'fetch all space',data: arr });
+      } else {
+        res.status(302).send({success:'false',message:'failed',data: [] });
+      }
+    } else {
+      res.status(400).send("UnAuthorized");
+    }
+  } catch (e) {
+    res.status(500).send("internal server error");
+  }
+}
+
 
 const  updateSpace=async(req,res)=>{
   try{
@@ -244,6 +272,31 @@ const spaceImage=async(req,res)=>{
   })
 }
 
+const deleteSpace=async(req,res)=>{
+  try {
+    if (req.params.spaceId.length == 24) {
+      spaceModel.space.findByIdAndUpdate(req.params.spaceId,{ deleteFlag: "false" },{ returnOriginal: false },
+        (err, data) => {
+          if (err) {
+            throw err;
+          } else {
+            if (data != null) {
+              res.status(200).send({success:'true', message: "data deleted successfully" });
+            } else {
+              res.status(400).send({ success:'false',message:'failed', });
+            }
+          }
+        }
+      );
+    } else {
+      res.status(200).send({ message: "please provide a valid id" });
+    }
+  } catch (e) {
+    console.log(e.message)
+    res.status(500).send("internal server error");
+  }
+}
+
 
 module.exports={
     register,
@@ -254,8 +307,10 @@ module.exports={
     deleteUser,
     createSpace,
     getBySpaceId,
+    getAllSpaceCreatedByOwner,
     getAllSpace,
     updateSpace,
+    deleteSpace,
     spaceImage
 }
 
