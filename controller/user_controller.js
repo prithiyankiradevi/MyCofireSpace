@@ -1,3 +1,4 @@
+const mongoose=require('mongoose')
 const loginModel=require('../model/user_model')
 const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
@@ -26,13 +27,13 @@ const register=async(req,res)=>{
 
 const login=async(req,res)=>{
     try{
-        const data=await loginModel.findOne({phoneNumber:req.body.phoneNumber,deleteFlag:'false'})
+        const data=await loginModel.findOne({phoneNumber:req.body.phoneNumber},{deleteFlag:false})
+        // .aggregate([{$match:{"phoneNumber":req.body.phoneNumber}}])
         // .aggregate([{$match:{$and:[{phoneNumber:req.body.phoneNumber},{deleteFlag:'false'}]}}])
         if(data){
             const password=await bcrypt.compare(req.body.password,data.password)
             if(password==true){
-                const token=JSON.stringify(jwt.sign({id:data._id},'who are you'))
-
+                const token=(jwt.sign({id:data._id},'who are you'))
                 res.status(200).send({success:'true',message:'successfully login',data:data,token})
             }else{
             res.status(200).send({success:'false',message:'invalid password',data:[]})
@@ -41,14 +42,14 @@ const login=async(req,res)=>{
             res.status(400).send({success:'false',message:'data not exists',data:[]})
         }
     }catch(e){
-      console.log(e.message)
+      console.log(e)
         res.status(500).send({success:'false',message:'internal server error'})
     }
 }
 
 const getAllUser=async(req,res)=>{
     try {
-          const a = await loginModel.find({deleteFlag:'false'})
+          const a = await loginModel.aggregate([{$match:{"deleteFlag":false}}])
           if (a.length != 0) {
             a.sort().reverse()
             res.status(200).send({ success:'true',message:'fetch data successfully',data: a });
@@ -63,7 +64,8 @@ const getAllUser=async(req,res)=>{
 const getPerUser=async(req,res)=>{
     try {
         if (req.params.userId.length == 24) {
-          let response = await loginModel.find({_id:req.params.userId,deleteFlag:"false"});
+          let response = await loginModel.aggregate([{$match:{$and:[{"_id":new mongoose.Types.ObjectId(req.params.userId)},{"deleteFlag":false}]}}])
+          console.log(response)
           const data = response[0];
           if (data != null) {
             res.status(200).send({ success:'true',message:'fetch data successfully',data: data });
@@ -162,7 +164,7 @@ const createSpace=async(req,res)=>{
 const getBySpaceId=async(req,res)=>{
   try{
   if (req.params.spaceId.length == 24) {
-    let response = await spaceModel.space.find({_id:req.params.spaceId,deleteFlag:false});
+    let response = await spaceModel.space.aggregate([{$match:{$and:[{"_id":new mongoose.Types.ObjectId(req.params.spaceId)},{"deleteFlag":false}]}}])
     const data = response[0];
     if (data != null) {
       res.status(200).send({success:'true',message:'data fetch successfully' ,data: data });
@@ -206,9 +208,11 @@ const getAllSpaceCreatedByOwner=async(req,res)=>{
 
 const getAllSpace=async(req,res)=>{
   try {
-    const token = jwt.decode(req.headers.authorization);
+    console.log(req.headers.authorization)
+    const token = jwt.decode(JSON.parse(req.headers.authorization));
+    console.log(token)
     if (token != undefined) {
-      const a = await spaceModel.space.find({})
+      const a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])    
       const arr=[]
       if (a.length != 0) {
         const filterSpace=a.map((result)=>{
@@ -224,16 +228,18 @@ const getAllSpace=async(req,res)=>{
       res.status(400).send("UnAuthorized");
     }
   } catch (e) {
+    console.log(e.message)
     res.status(500).send("internal server error");
   }
 }
-
 
 const  updateSpace=async(req,res)=>{
   try{
     if(req.headers.authorization){
       if (req.params.spaceId.length == 24) {
-        let response = await spaceModel.space.findByIdAndUpdate({_id:req.params.spaceId,deleteFlag:"false"},{$set:req.body},{new:true});
+      let response = await spaceModel.space.aggregate(
+      [{$match:{"_id":new mongoose.Types.ObjectId(req.params.spaceId)}},{$match:{"deleteFlag":false}}])
+        console.log(response)
         if (response) {
           const token=await jwt.decode(req.headers.authorization)
           if(token){
@@ -258,6 +264,7 @@ const  updateSpace=async(req,res)=>{
 
 const spaceImage=async(req,res)=>{
   console.log(req.file)
+
   req.body.spaceImage=`https://mycofirespace.herokuapp.com/uploads/${req.file.originalname}`
   spaceModel.spaceImage.create(req.body,async(err,data)=>{
     if(err){
