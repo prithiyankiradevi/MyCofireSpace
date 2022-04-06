@@ -209,7 +209,7 @@ const getAllSpaceCreatedByOwner=async(req,res)=>{
 const getAllSpace=async(req,res)=>{
   try {
     console.log(req.headers.authorization)
-    const token = jwt.decode(JSON.parse(req.headers.authorization));
+    const token = jwt.decode((req.headers.authorization));
     console.log(token)
     if (token != undefined) {
       const a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])    
