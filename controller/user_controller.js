@@ -135,12 +135,9 @@ const createSpace=async(req,res)=>{
         res.json({message:errors.array()})
     }else{
         if(req.headers.authorization){
-            const token=await jwt.decode(JSON.parse(req.headers.authorization))
-            console.log(token)
+            const token=await jwt.decode(req.headers.authorization)
             req.body.spaceOwnerId=token.id
-            console.log(req.body)
             spaceModel.space.create(req.body,(err,data)=>{
-              console.log(data)
                 if(err){
                     res.status(400).send({success:'false',message:'failed'})
                 }else{
@@ -156,7 +153,7 @@ const createSpace=async(req,res)=>{
         }
     }
   }catch(e){
-    console.log(e)
+    console.log(e.message)
     res.status(500).send('internal server error')
   }
 }
@@ -181,6 +178,7 @@ const getBySpaceId=async(req,res)=>{
 }
 
 const getAllSpaceCreatedByOwner=async(req,res)=>{
+  console.log(req.body)
   try {
     const token = jwt.decode(req.headers.authorization);
     if (token != undefined) {
@@ -263,20 +261,26 @@ const  updateSpace=async(req,res)=>{
 }
 
 const spaceImage=async(req,res)=>{
-  console.log(req.file)
-
-  req.body.spaceImage=`https://mycofirespace.herokuapp.com/uploads/${req.file.originalname}`
-  spaceModel.spaceImage.create(req.body,async(err,data)=>{
-    if(err){
-      res.status(400).send({success:'false',message:'failed'})
-    }else{
-      console.log(data)
-    //   const z=await spaceModel.space.findById(req.params.id)
-    //  z.spaceImageArray.push(data.spaceImage)
-    //  const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
-      res.status(200).send({success:'true',message:'space image created successfully',data})
-    }
-  })
+  try{
+    console.log(req.body.spaceImage)
+    
+// console.log(req.file)
+    // req.body.spaceImage=`http://localhost:7777/uploads/${req.file.originalname}`
+    spaceModel.spaceImage.create(req.body,async(err,data)=>{
+      if(err){
+        res.status(400).send({success:'false',message:'failed'})
+      }else{
+        console.log(data)
+      //   const z=await spaceModel.space.findById(req.params.id)
+      //  z.spaceImageArray.push(data.spaceImage)
+      //  const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
+        res.status(200).send({success:'true',message:'space image created successfully',data})
+      }
+    })
+  }catch(e){
+    console.log(e.message)
+    res.status(500).send('internal server error')
+  }
 }
 
 const deleteSpace=async(req,res)=>{
