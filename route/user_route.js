@@ -15,7 +15,7 @@ router.get('/space/getById/:spaceId',userController.getBySpaceId)
 router.put('/space/update/:spaceId',userController.updateSpace)
 router.get('/space/getAll',userController.getAllSpace)
 router.get('/space/getSpaceCreatedByOwner',userController.getAllSpaceCreatedByOwner)
-router.get('/space/delete/:spaceId',userController.deleteSpace)
+router.delete('/space/delete/:spaceId',userController.deleteSpace)
 
 // router.delete('/space/delete',userController.)
 // 

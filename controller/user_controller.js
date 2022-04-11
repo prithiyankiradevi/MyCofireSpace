@@ -235,8 +235,7 @@ const  updateSpace=async(req,res)=>{
   try{
     if(req.headers.authorization){
       if (req.params.spaceId.length == 24) {
-      let response = await spaceModel.space.aggregate(
-      [{$match:{"_id":new mongoose.Types.ObjectId(req.params.spaceId)}},{$match:{"deleteFlag":false}}])
+      let response = await spaceModel.space.findByIdAndUpdate(req.params.spaceId,req.body,{new:true})
         console.log(response)
         if (response) {
           const token=await jwt.decode(req.headers.authorization)

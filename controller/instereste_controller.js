@@ -2,6 +2,7 @@ const userModel=require('../model/user_model')
 const spaceModel=require('../model/space_model')
 const interested=require('../model/interest_model')
 const { default: mongoose } = require('mongoose')
+const razorPay=require('razorpay')
 
 const createInterestedPersons=async(req,res)=>{
     try{
@@ -59,6 +60,11 @@ const getSingleInterestedUserForSpaceOwner=async(req,res)=>{
     }catch(e){
         res.status(500).send({message:'internal server error'})
     }
+}
+
+const payment=(req,res)=>{
+    rzp_test_UQ1rJWCng78O7O
+    ERxY8KnHwIcjgWb5znZSmpLr    
 }
 
 
