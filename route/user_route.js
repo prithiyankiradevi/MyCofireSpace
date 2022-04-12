@@ -17,6 +17,8 @@ router.get('/space/getAll',userController.getAllSpace)
 router.get('/space/getSpaceCreatedByOwner',userController.getAllSpaceCreatedByOwner)
 router.delete('/space/delete/:spaceId',userController.deleteSpace)
 
+
+
 // router.delete('/space/delete',userController.)
 // 
 // router.post('/space/image/create',multer.upload.single('spaceImage'),userController.spaceImage)

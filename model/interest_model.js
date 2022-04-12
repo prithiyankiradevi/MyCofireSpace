@@ -14,6 +14,10 @@ const interestSchema=mongoose.Schema({
     deleteFlag:{
         type:Boolean,
         default:false
+    },
+    interest:{
+        type:Boolean,
+        default:false
     }
 })
 

@@ -4,6 +4,8 @@ const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
 const spaceModel=require('../model/space_model')
 const {validationResult}=require('express-validator')
+const Razorpay = require('razorpay');
+
 
 const register=async(req,res)=>{
     try{
@@ -163,6 +165,7 @@ const getBySpaceId=async(req,res)=>{
   if (req.params.spaceId.length == 24) {
     let response = await spaceModel.space.aggregate([{$match:{$and:[{"_id":new mongoose.Types.ObjectId(req.params.spaceId)},{"deleteFlag":false}]}}])
     const data = response[0];
+    console.log(data)
     if (data != null) {
       res.status(200).send({success:'true',message:'data fetch successfully' ,data: data });
     } else {
@@ -285,12 +288,13 @@ const spaceImage=async(req,res)=>{
 const deleteSpace=async(req,res)=>{
   try {
     if (req.params.spaceId.length == 24) {
-      spaceModel.space.findByIdAndUpdate(req.params.spaceId,{ deleteFlag: "false" },{ returnOriginal: false },
+      spaceModel.space.findByIdAndUpdate(req.params.spaceId,{ deleteFlag: true },{ new: true },
         (err, data) => {
           if (err) {
             throw err;
           } else {
             if (data != null) {
+              console.log(data)
               res.status(200).send({success:'true', message: "data deleted successfully" });
             } else {
               res.status(400).send({ success:'false',message:'failed', });
@@ -308,6 +312,9 @@ const deleteSpace=async(req,res)=>{
 }
 
 
+
+
+
 module.exports={
     register,
     login,
@@ -321,8 +328,9 @@ module.exports={
     getAllSpace,
     updateSpace,
     deleteSpace,
-    spaceImage
+    spaceImage,
 }
+
 
 
 
