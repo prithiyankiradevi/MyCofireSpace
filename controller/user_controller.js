@@ -5,6 +5,8 @@ const jwt=require('jsonwebtoken')
 const spaceModel=require('../model/space_model')
 const {validationResult}=require('express-validator')
 const Razorpay = require('razorpay');
+const pagination=require('../middleware/pagination')
+const { createCipheriv } = require('crypto')
 
 
 const register=async(req,res)=>{
@@ -35,8 +37,9 @@ const login=async(req,res)=>{
         if(data){
             const password=await bcrypt.compare(req.body.password,data.password)
             if(password==true){
-                const token=(jwt.sign({id:data._id},'who are you'))
-                res.status(200).send({success:'true',message:'successfully login',data:data,token})
+                const token=JSON.stringify(jwt.sign({id:data._id},'who are you'))
+                
+                res.status(200).send({success:'true',message:'successfully login',data:data,token:JSON.parse(token)})
             }else{
             res.status(200).send({success:'false',message:'invalid password',data:[]})
             }
@@ -44,7 +47,6 @@ const login=async(req,res)=>{
             res.status(400).send({success:'false',message:'data not exists',data:[]})
         }
     }catch(e){
-      console.log(e)
         res.status(500).send({success:'false',message:'internal server error'})
     }
 }
@@ -67,7 +69,6 @@ const getPerUser=async(req,res)=>{
     try {
         if (req.params.userId.length == 24) {
           let response = await loginModel.aggregate([{$match:{$and:[{"_id":new mongoose.Types.ObjectId(req.params.userId)},{"deleteFlag":false}]}}])
-          console.log(response)
           const data = response[0];
           if (data != null) {
             res.status(200).send({ success:'true',message:'fetch data successfully',data: data });
@@ -100,7 +101,6 @@ const updateUser=async(req,res)=>{
       res.status(400).send({ message: "unauthorized" });
     }
   }catch(e){
-    console.log(e.message)
     res.status(500).send("internal server error")
   }
 }
@@ -137,13 +137,15 @@ const createSpace=async(req,res)=>{
         res.json({message:errors.array()})
     }else{
         if(req.headers.authorization){
-            const token=await jwt.decode(req.headers.authorization)
+            const token=await jwt.decode((req.headers.authorization))
             req.body.spaceOwnerId=token.id
+            req.body.label=req.params.label
             spaceModel.space.create(req.body,(err,data)=>{
                 if(err){
                     res.status(400).send({success:'false',message:'failed'})
                 }else{
                     if(data!=null){
+                      console.log(data)
                         res.status(200).send({success:'true',message:'create successfully',data})
                     }else{
                       res.status(200).send({success:'false',message:'failed',data:[]})
@@ -155,7 +157,6 @@ const createSpace=async(req,res)=>{
         }
     }
   }catch(e){
-    console.log(e.message)
     res.status(500).send('internal server error')
   }
 }
@@ -165,7 +166,6 @@ const getBySpaceId=async(req,res)=>{
   if (req.params.spaceId.length == 24) {
     let response = await spaceModel.space.aggregate([{$match:{$and:[{"_id":new mongoose.Types.ObjectId(req.params.spaceId)},{"deleteFlag":false}]}}])
     const data = response[0];
-    console.log(data)
     if (data != null) {
       res.status(200).send({success:'true',message:'data fetch successfully' ,data: data });
     } else {
@@ -175,13 +175,11 @@ const getBySpaceId=async(req,res)=>{
     res.status(200).send({ message: "please provide a valid id" });
   }
 } catch (e) {
-  console.log(e.message)
   res.status(500).send("internal server error");
 }
 }
 
 const getAllSpaceCreatedByOwner=async(req,res)=>{
-  console.log(req.body)
   try {
     const token = jwt.decode(req.headers.authorization);
     if (token != undefined) {
@@ -207,13 +205,23 @@ const getAllSpaceCreatedByOwner=async(req,res)=>{
   }
 }
 
-const getAllSpace=async(req,res)=>{
+const getOverAllSpace=async(req,res)=>{
   try {
-    console.log(req.headers.authorization)
     const token = jwt.decode((req.headers.authorization));
-    console.log(token)
     if (token != undefined) {
-      const a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])    
+
+      if(req.params.label=='avaliable'){
+        var a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}},{$match:{"label":req.params.label}},{ $sort: { 'rating': -1 }}])    
+      }
+
+      if(req.params.label=='wanted'){
+        var a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}},{$match:{"label":req.params.label}},{ $sort: { 'rating': -1 }}])    
+      }
+
+      if(req.params.label=='null'){
+        var a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}},{ $sort: { 'rating': -1 }}])
+      }
+      
       const arr=[]
       if (a.length != 0) {
         const filterSpace=a.map((result)=>{
@@ -221,7 +229,7 @@ const getAllSpace=async(req,res)=>{
           return arr.push(result)
         })
         arr.sort().reverse()
-        res.status(200).send({success:'true',message:'fetch all space',data: arr });
+        res.status(200).send({success:'true',message:'fetch all space',data: arr});
       } else {
         res.status(302).send({success:'false',message:'failed',data: [] });
       }
@@ -229,7 +237,6 @@ const getAllSpace=async(req,res)=>{
       res.status(400).send("UnAuthorized");
     }
   } catch (e) {
-    console.log(e.message)
     res.status(500).send("internal server error");
   }
 }
@@ -239,7 +246,6 @@ const  updateSpace=async(req,res)=>{
     if(req.headers.authorization){
       if (req.params.spaceId.length == 24) {
       let response = await spaceModel.space.findByIdAndUpdate(req.params.spaceId,req.body,{new:true})
-        console.log(response)
         if (response) {
           const token=await jwt.decode(req.headers.authorization)
           if(token){
@@ -257,30 +263,21 @@ const  updateSpace=async(req,res)=>{
       res.status(400).send({ message: "unauthorized" });
     }
   }catch(e){
-    console.log(e.message)
     res.status(500).send("internal server error")
   }
 }
 
 const spaceImage=async(req,res)=>{
   try{
-    console.log(req.body.spaceImage)
-    
-// console.log(req.file)
-    // req.body.spaceImage=`http://localhost:7777/uploads/${req.file.originalname}`
+    req.body.spaceImage=`http://192.168.0.144:7777/uploads/${req.file.originalname}`
     spaceModel.spaceImage.create(req.body,async(err,data)=>{
       if(err){
         res.status(400).send({success:'false',message:'failed'})
       }else{
-        console.log(data)
-      //   const z=await spaceModel.space.findById(req.params.id)
-      //  z.spaceImageArray.push(data.spaceImage)
-      //  const a=await spaceModel.space.findByIdAndUpdate(req.params.id,z,{new:true})
         res.status(200).send({success:'true',message:'space image created successfully',data})
       }
     })
   }catch(e){
-    console.log(e.message)
     res.status(500).send('internal server error')
   }
 }
@@ -294,7 +291,6 @@ const deleteSpace=async(req,res)=>{
             throw err;
           } else {
             if (data != null) {
-              console.log(data)
               res.status(200).send({success:'true', message: "data deleted successfully" });
             } else {
               res.status(400).send({ success:'false',message:'failed', });
@@ -306,13 +302,35 @@ const deleteSpace=async(req,res)=>{
       res.status(200).send({ message: "please provide a valid id" });
     }
   } catch (e) {
-    console.log(e.message)
     res.status(500).send("internal server error");
   }
 }
 
+const searchAddress=async(req,res)=>{
+  const data=await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])
+  // console.log(data)
+pagination.pagination(spaceModel.space,1, req, res, null)  
+}
 
 
+//pending
+const avaliableWantedOwnerList=async(req,res)=>{
+  try{
+    const data=await spaceModel.space.aggregate([{$match:{$and:[{"deleteFlag":false},{"label":req.params.label}]}}])
+    const arr=[]
+    for(i=0;i<data.length;i++){
+      console.log(data[i].spaceOwnerId)
+      // const data=await loginModel.findById({_id:data[i].spaceOwnerId})
+      // .aggregate([{$match:{"_id":new mongoose.Types.ObjectId(data[i].spaceOwnerId)}}])
+      // console.log(data)
+      // console.log(data[i].spaceOwnerId)
+      // arr.push(data[0])
+    }
+    console.log(arr)
+  }catch(e){
+
+  }
+}
 
 
 module.exports={
@@ -325,10 +343,12 @@ module.exports={
     createSpace,
     getBySpaceId,
     getAllSpaceCreatedByOwner,
-    getAllSpace,
+    getOverAllSpace,
     updateSpace,
     deleteSpace,
     spaceImage,
+    searchAddress,
+    avaliableWantedOwnerList
 }
 
 

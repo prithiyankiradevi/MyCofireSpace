@@ -11,13 +11,13 @@ const interestSchema=mongoose.Schema({
     customerDetails:{
         type:Object
     },
-    deleteFlag:{
-        type:Boolean,
-        default:false
-    },
     interest:{
         type:Boolean,
         default:false
+    },
+    createdAt:{
+        type:Date,
+        default:new Date()
     }
 })
 

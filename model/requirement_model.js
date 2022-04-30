@@ -7,6 +7,10 @@ const requirementSchema=mongoose.Schema({
     deleteFlag:{
         type:Boolean,
         default:false
+    },
+    createdAt:{
+        type:Date,
+        default:new Date()
     }
 })
 

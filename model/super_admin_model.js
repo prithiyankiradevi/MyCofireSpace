@@ -6,8 +6,38 @@ const login=mongoose.Schema({
 
     },
     email:String,
-    password:String
+    password:String,
+    role:{
+        type:String,
+        default:'admin'
+    },
+    createdAt:{
+        type:Date,
+        default:new Date()
+    }
     
 })
 
-module.exports=mongoose.model('superAdmin',login)
+
+const packageSchema=mongoose.Schema({
+    subscriptionPackageName:String,
+    subscriptionAmount:Number,
+    createdAt:{
+        type:Date,
+        default:new Date()
+    },
+    deleteFlag:{
+        type:Boolean,
+        default:false
+    }
+    
+})
+
+const package=mongoose.model('packageSchema',packageSchema)
+const admin=mongoose.model('superAdmin',login)
+
+
+module.exports={
+    package,
+    admin
+}

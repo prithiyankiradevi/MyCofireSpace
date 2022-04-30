@@ -2,11 +2,11 @@ const express=require('express')
 const cors=require('cors')
 const dotenv=require('dotenv').config()
 require('./config/db_config')
-const superAdmin=require('./route/super_admin')
+const superAdmin=require('./route/super_admin_route')
 const user=require('./route/user_route')
-const space=require('./route/space_route')
 const interest=require('./route/interested_route')
 const payment=require('./route/payment_route')
+const report=require('./route/report_route')
 
 const app=express();
 
@@ -21,9 +21,10 @@ app.get('',(req,res)=>{
 
 app.use('/admin',superAdmin)
 app.use('/user',user)
-app.use('/space',space)
-app.use('/interest',interest)
+app.use('/user/interest',interest)
 app.use('/payment',payment)
+app.use('/user/report',report)
+
 
 app.use('/uploads',express.static('uploads'))
 

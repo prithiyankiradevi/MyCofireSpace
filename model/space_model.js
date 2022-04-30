@@ -7,12 +7,10 @@ const spaceSchema = mongoose.Schema({
     address: String,
     city: String,
     contact: Number,
-    day: 
-        []
-    ,
-    // dayPrice:String,
-    // weekPrice:String,
-    // monthPrice:String,
+    day:[],
+    dayPrice:String,
+    weekPrice:String,
+    monthPrice:String,
     wifi: {
         type: Boolean,
         default: false
@@ -21,7 +19,7 @@ const spaceSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    Ac: {
+    ac: {
         type: Boolean,
         default: false
     },
@@ -34,10 +32,40 @@ const spaceSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
+    packageStatus:{
+        type:String,
+        default:'free'
+    },
     createdAt:{
         type:Date,
         default:new Date()},
-    spaceOwnerId:String
+    spaceOwnerId:String,
+    rating:{
+        type:String,
+        default:'0'
+    },
+    label:String,
+    location:{
+        spaceLatitude:String,
+        spaceLongititude:String
+    } ,
+    createdAt:{
+        type:Date,
+        default:new Date()
+    },
+    category:String
+})
+
+const ratingSchema=mongoose.Schema({
+    deleteFlag:{
+        type:Boolean,
+        default:false
+    },
+    rating:String,
+    createdAt:{
+        type:Date,
+        default:Date.now()
+    }
 })
 
 const spaceImageSchema=mongoose.Schema({
@@ -45,6 +73,10 @@ const spaceImageSchema=mongoose.Schema({
     deleteFlag:{
         type:Boolean,
         default:false
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now()
     }
 })
 
@@ -60,9 +92,12 @@ const validation = [
 
 const space=mongoose.model('spaceSchema',spaceSchema)
 const spaceImage=mongoose.model('spaceImageSchema',spaceImageSchema)
+const rating=mongoose.model('ratingSchema',ratingSchema)
+
 
 module.exports={
     space,
     spaceImage,
-    validation
+    validation,
+    rating
 }

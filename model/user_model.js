@@ -9,7 +9,32 @@ const registerSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    location:String
+    location:String,
+    paymentStatus:{
+        type:String,
+        default:'free'
+    },
+    createdAt:{
+        type:Date,
+        default:new Date()
+    },
+    orderId:{
+        type:String,
+        default:'0'
+    },
+    subscriptionStartDate:{
+        type:String,
+        default:'0'
+    },
+    subscriptionEndDate:{
+        type:String,
+        default:'0'
+    },
+    validityDays:{
+        type:Number,
+        default:0
+    }
+
 })
 
 

@@ -4,6 +4,7 @@ const storage=multer.diskStorage({
     destination:'uploads',
     filename:(req,file,cb)=>{
         console.log(file)
+        console.log('jlkikn')
         cb(null,file.originalname)
     }
 })
