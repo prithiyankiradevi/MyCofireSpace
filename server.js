@@ -19,6 +19,10 @@ app.get('',(req,res)=>{
     res.status(200).send('welcome co fire space')
 })
 
+app.get('/verification',(req,res)=>{
+    res.status(200).send('welcome co fire space')
+})
+
 app.use('/admin',superAdmin)
 app.use('/user',user)
 app.use('/user/interest',interest)

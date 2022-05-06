@@ -5,6 +5,7 @@ const admin=require('../controller/super_admin_controller')
 
 
 router.post('/create',userController.register)
+router.get('/verification/:id',userController.verifyUsers)
 router.post('/login',userController.login)
 router.get('/getAll',userController.getAllUser)
 router.get('/getById/:userId',userController.getPerUser)

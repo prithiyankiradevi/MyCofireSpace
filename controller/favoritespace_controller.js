@@ -5,41 +5,65 @@ const { default: mongoose } = require('mongoose')
 const jwt=require('jsonwebtoken')
 const payment=require('../model/payment_model')
 const razorPay=require('razorpay')
+const _=require('lodash')
 var moment = require('moment')
+const { DefaultSerializer } = require('v8')
 
 const createInterestedPersons=async(req,res)=>{
     try{
-        if(req.headers.authorization){
+        if(req.headers.authorization && req.params.spaceId){
             const token=jwt.decode(req.headers.authorization)
-                const user=await interested.interested.aggregate([{$unwind:{path:"$spaceDetails"}},{$unwind:{path:"$customerDetails"}},{$match:{$and:[{"spaceDetails._id":new mongoose.Types.ObjectId(req.params.spaceId)},{"customerDetails._id":new mongoose.Types.ObjectId(token.id)}]}}])
-                if(user.length==0){
+            
 
                     if(req.body.interest==true){
 
                         const user=await userModel.aggregate([{$match:{"_id":new mongoose.Types.ObjectId(token.id)}},{$match:{"deleteFlag":false}}])
                         req.body.customerDetails=user[0]
+                        
 
                         const space=await spaceModel.space.aggregate([{$match:{"_id":new mongoose.Types.ObjectId(req.params.spaceId)}},{$match:{"deleteFlag":false}}])       
                         req.body.spaceDetails=space[0]
 
-                        interested.interested.create(req.body,(err,data)=>{
+                        interested.interested.create(req.body,async(err,data)=>{
                         if(err){throw err}
+
                         else{
+
+                            const data2=await spaceModel.space.findByIdAndUpdate(req.params.spaceId)
+                            data2.interestUserList.push(token.id)
+                            console.log('line 29',data2)
+                            await spaceModel.space.findByIdAndUpdate(req.params.spaceId,data2,{new:true})
+
                             res.status(200).send({success:'true',message:'created successfully',data})
                         }
                     })
                     }
-                }else{
-                    const data=await interested.interested.findByIdAndUpdate({_id:user[0]._id},req.body,{new:true})
-                    res.status(200).send({success:'true',message:'unliked successfully',data})
-                }
-           
-           
+
+                    if(req.body.interest==false){
+                        const data3=await spaceModel.space.findByIdAndUpdate(req.params.spaceId)
+
+                        const array =data3.interestUserList
+                        console.log('line 45',array)
+
+                        // const array1=array.filter((result)=>result!=token.id)
+                        _.remove(array, function(n) { return n === token.id;})
+                        // console.log('line 48',array)
+                        data3.interestUserList=array
+
+                        const data4=await spaceModel.space.findByIdAndUpdate(req.params.spaceId,data3,{new:true})
+
+                            // console.log('line 37',data4)
+                            const user=await interested.interested.aggregate([{$unwind:{path:"$spaceDetails"}},{$unwind:{path:"$customerDetails"}},{$match:{$and:[{"spaceDetails._id":new mongoose.Types.ObjectId(req.params.spaceId)},{"customerDetails._id":new mongoose.Types.ObjectId(token.id)}]}}])
+
+                            const data=await interested.interested.findByIdAndUpdate({_id:user[0]._id},req.body,{new:true})
+                            res.status(200).send({success:'true',message:'unliked successfully',data})
+                    }
+             
         }else{
             res.status(200).send({success:'false',message:'unauthorized',data})
         }
     }catch(e){
-        console.log(e.message)
+        console.log(e)
         res.status(500).send({message:'internal server error'})
     }
 }
@@ -120,7 +144,6 @@ const getSingleInterestedUserForSpaceOwner=async(req,res)=>{
         res.status(500).send({message:'internal server error'})
     }
 }
-
 
 module.exports={
     createInterestedPersons,

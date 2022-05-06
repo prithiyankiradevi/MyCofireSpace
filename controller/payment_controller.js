@@ -18,7 +18,7 @@ const createOrderId = (req, res) => {
       res.status(401).send({ success: 'false', message: 'failed' })
     } else {
       req.body.orderId = order.id,
-        req.body.paymentPersonId = req.params.userId
+        // req.body.paymentPersonId = req.params.userId
       payment.order.create(req.body, (err, data) => {
         if (err) { throw err }
         else { res.status(200).send({ success: 'true', message: 'successfully generated orderId', data }) }
@@ -92,6 +92,7 @@ const createPaymentDetails =async(req, res)=>{
         req.body.subscriptionStartDate=paymentCreated.createdAt
         req.body.orderId=paymentCreated.orderId
         req.body.paymentStatus='paid'
+        req.body.interest=true
     
   }
 

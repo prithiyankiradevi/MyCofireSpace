@@ -53,7 +53,13 @@ const spaceSchema = mongoose.Schema({
         type:Date,
         default:new Date()
     },
-    category:String
+    category:String,
+    interest:{
+        type:Boolean,
+        default:false
+    },
+    interestUserList:[]
+    
 })
 
 const ratingSchema=mongoose.Schema({

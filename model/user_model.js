@@ -33,8 +33,15 @@ const registerSchema = mongoose.Schema({
     validityDays:{
         type:Number,
         default:0
+    },
+    interest:{
+        type:Boolean,
+        default:false
+    },
+    active:{
+        type:Boolean,
+        default:false
     }
-
 })
 
 

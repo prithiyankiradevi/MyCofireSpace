@@ -1,3 +1,4 @@
+var _ = require('lodash');
 const mongoose=require('mongoose')
 const loginModel=require('../model/user_model')
 const bcrypt=require('bcrypt')
@@ -7,6 +8,27 @@ const {validationResult}=require('express-validator')
 const Razorpay = require('razorpay');
 const pagination=require('../middleware/pagination')
 const { createCipheriv } = require('crypto')
+const nodemailer=require('nodemailer')
+const req = require('express/lib/request')
+const interest=require('../model/interest_model');
+const { listenerCount } = require('process');
+
+
+let transport = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: 'pravindev00@gmail.com',
+      pass: 'devpravin00'
+  }
+})
+const postMail = function ( to, subject, text) {
+  return transport.sendMail({
+      from: 'pravindev00@gmail.com',
+      to: to,
+      subject: subject,
+      text: text
+  })
+}
 
 
 const register=async(req,res)=>{
@@ -18,6 +40,11 @@ const register=async(req,res)=>{
                 if(err){
                     res.status(400).send({success:'false',message:'failed',data:[]})
                 }else{
+
+                  console.log(result)
+                  const encryptId=jwt.sign({id:result._id},'who are you')
+                  console.log(encryptId)
+                    postMail(result.email,'verification',`http://192.168.0.237:7777/user/verification/${encryptId}`)
                     res.status(200).send({success:'true',message:'successfully created',data:result})
                 }
             })
@@ -29,9 +56,28 @@ const register=async(req,res)=>{
     }
 }
 
+
+const verifyUsers =async (req,res)=>{
+
+  try{
+
+    const decryptId=await jwt.decode(req.params.id)
+    const id=decryptId.id
+    const data=await loginModel.findByIdAndUpdate(id,{active:true},{new:true})
+    res.status(200).send({message:'verification successfullly'})
+
+  }catch(e){
+    res.status(500).send({message:'internal server error'})
+
+  }
+}
+
+
 const login=async(req,res)=>{
     try{
         const data=await loginModel.findOne({phoneNumber:req.body.phoneNumber},{deleteFlag:false})
+        // const data=await loginModel.aggregate([{$match:{$and:[{"phoneNumber":req.body.phoneNumber},{"deleteFlag":false}]}},{$match:{"active":true}}])
+
         // .aggregate([{$match:{"phoneNumber":req.body.phoneNumber}}])
         // .aggregate([{$match:{$and:[{phoneNumber:req.body.phoneNumber},{deleteFlag:'false'}]}}])
         if(data){
@@ -129,7 +175,6 @@ const deleteUser=async(req,res)=>{
   }
 }
 
-
 const createSpace=async(req,res)=>{
   try{
     const errors=validationResult(req)
@@ -218,7 +263,7 @@ const getOverAllSpace=async(req,res)=>{
         var a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}},{$match:{"label":req.params.label}},{ $sort: { 'rating': -1 }}])    
       }
 
-      if(req.params.label=='null'){
+      if(req.params.label=='all'){
         var a = await spaceModel.space.aggregate([{$match:{"deleteFlag":false}},{ $sort: { 'rating': -1 }}])
       }
       
@@ -228,8 +273,17 @@ const getOverAllSpace=async(req,res)=>{
           result.deleteFlag=='false'
           return arr.push(result)
         })
-        arr.sort().reverse()
-        res.status(200).send({success:'true',message:'fetch all space',data: arr});
+
+        const zz = await interest.interested.aggregate([ {$match:{"interest":true}},{ $unwind: { path: "$customerDetails" } },{$match:{"customerDetails._id":new mongoose.Types.ObjectId(token.id)}}])
+       const datas=[]
+       
+       
+        for(i=0;i<arr.length;i++){
+          arr[i].interestUserList.includes(token.id)?arr[i].interest=true:arr[i].interest=false
+          datas.push(arr[i])
+        }
+      
+        res.status(200).send({success:'true',message:'fetch all space',data: result});
       } else {
         res.status(302).send({success:'false',message:'failed',data: [] });
       }
@@ -237,6 +291,7 @@ const getOverAllSpace=async(req,res)=>{
       res.status(400).send("UnAuthorized");
     }
   } catch (e) {
+    console.log(e)
     res.status(500).send("internal server error");
   }
 }
@@ -268,18 +323,24 @@ const  updateSpace=async(req,res)=>{
 }
 
 const spaceImage=async(req,res)=>{
+
   try{
-    req.body.spaceImage=`http://192.168.0.144:7777/uploads/${req.file.originalname}`
+    console.log('line 304',req.body.spaceImage)
+    console.log(req.file)
+    req.body.spaceImage=`http://192.168.0.237:7777/uploads/${req.file.originalname}`
     spaceModel.spaceImage.create(req.body,async(err,data)=>{
       if(err){
         res.status(400).send({success:'false',message:'failed'})
       }else{
+        console.log(data)
         res.status(200).send({success:'true',message:'space image created successfully',data})
       }
     })
   }catch(e){
+    console.log(e)
     res.status(500).send('internal server error')
   }
+
 }
 
 const deleteSpace=async(req,res)=>{
@@ -307,11 +368,36 @@ const deleteSpace=async(req,res)=>{
 }
 
 const searchAddress=async(req,res)=>{
-  const data=await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])
-  // console.log(data)
-pagination.pagination(spaceModel.space,1, req, res, null)  
+  const z=await spaceModel.space.aggregate([{$match:{"deleteFlag":false}}])
+  const emptyarr = [];
+if (z == undefined || null) {
+  return;
+} else {
+  console.log(z.length)
+  for (var i = 0; i < z.length; i++) {
+   console.log('main')
+
+    if (z[i].address.toLowerCase().includes(req.query.search.toLowerCase())) {
+      console.log('firest if')
+      emptyarr.push(z[i]);
+    } 
+
+    if(z[i].city.toLowerCase().includes(req.query.search.toLowerCase())) {
+      console.log('2 if')
+
+      emptyarr.push(z[i]);
+    }
+    if(z[i].spaceName.toLowerCase().includes(req.query.search.toLowerCase())) {
+      console.log('3 if')
+
+      emptyarr.push(z[i]);
+    }
+  }
+
+  res.status(200).send({data:emptyarr})
 }
 
+}
 
 //pending
 const avaliableWantedOwnerList=async(req,res)=>{
@@ -335,6 +421,7 @@ const avaliableWantedOwnerList=async(req,res)=>{
 
 module.exports={
     register,
+    verifyUsers,
     login,
     getAllUser,
     getPerUser,

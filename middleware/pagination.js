@@ -87,6 +87,11 @@ async function textSearchQuery(
 
         emptyarr.push(z[i]);
       }
+      if(z[i].spaceName.toLowerCase().includes(req.query.search.toLowerCase())) {
+        console.log('3 if')
+
+        emptyarr.push(z[i]);
+      }
     }
 
   }
